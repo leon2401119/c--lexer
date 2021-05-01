@@ -1,0 +1,19 @@
+program => global_decls func_decls
+
+global_decls => global_decl global_decls | lambda
+global_decl => typedef | id_decl
+typedef => "typedef" basic_type general_type semicol
+id_decl => general_type id_unit id_list semicol
+id_list => coma id_unit id_list | lambda
+id_unit => id id_init
+id_init => op_eq const | lambda
+const => int_const | float_const | string_const
+
+func_decls => func_decl func_decls | lambda
+func_decl => general_type id "{" block_stmts "}"
+block_stmts => block_stmt block_stmts | lambda
+block_stmt => for_loop | while_loop | stmts
+
+stmts => stmt stmts | lambda
+stmt => id_decl | expr
+expr => id
