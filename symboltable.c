@@ -117,8 +117,24 @@ void printSymTab()
 	    symptr=symptr->front;
 	}
     }
+    symtab* last;
     while(all){
+	last = all;
 	printSym(all);
 	all = all->front;
+	free(last);
     }
+}
+
+void freeSymTab(){
+	int i;
+	symtab *cur,*tmp;
+	for(i=0;i<TABLE_SIZE;i++){
+		cur = hash_table[i];
+		while(cur){
+			tmp = cur;
+			cur = cur->front;
+			free(tmp);
+		}
+	}
 }

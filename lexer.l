@@ -9,6 +9,7 @@ symtab * lookup();
 symtab * ptr;
 void     insertID();
 void 	 printSymTab();
+void	 freeSymTab();
 /* You need to define for all tokens in C--, here are some examples */
 enum token{
 	CONST_INT,
@@ -181,6 +182,7 @@ int main()
 {
 	yylex();
 	printSymTab();
+	freeSymTab();
 	if(verbose)
 		printf("total lines = %d\n",linenumber);
 }
