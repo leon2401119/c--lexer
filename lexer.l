@@ -1,188 +1,126 @@
-%option noyywrap 
 %{
 #include <stdio.h>
-#include <stdbool.h>
-#include "header.h" 
-int linenumber=0;
-bool verbose = false;
-symtab * lookup();
-symtab * ptr;
-void     insertID();
-void 	 printSymTab();
-void	 freeSymTab();
-/* You need to define for all tokens in C--, here are some examples */
-enum token{
-	CONST_INT,
-	CONST_FLOAT,
-	CONST_STRING,
-	IDENTIFIER,
-	OP_ADD,
-	OP_SUB,
-	OP_MUL,
-	OP_DIV,
-	OP_SMALLER,
-	OP_LARGER,
-	OP_SMALLEREQ,
-	OP_LARGEREQ,
-	OP_NOTEQ,
-	OP_EQ,
-	OP_OR,
-	OP_AND,
-	OP_NOT,
-	OP_BITWISE_OR,
-	OP_BITWISE_AND,
-	OP_BITWISE_NOT,
-	OP_ASSIGN,
-	LPAREN,
-	RPAREN,
-	LBRACE,
-	RBRACE,
-	LBRACKET,
-	RBRACKET,
-	SEMICOL,
-	COMA,
-	DOT,
-	ARROW,
-	RSV_RETURN,
-	RSV_TYPEDEF,
-	RSV_IF,
-	RSV_ELSE,
-	RSV_FOR,
-	RSV_WHILE,
-	RSV_INT,
-	RSV_FLOAT,
-	RSV_VOID,
-	ERROR = 100
-};
 %}
-
-letter [a-zA-Z]
-digit [0-9]
-sep [ \t]
-
-
-%%
-("_"|{letter})+({letter}|{digit}|"_")*	{
-	if(!strcmp(yytext,"return")){
-		//return RSV_RETURN;
-	}
-	else if(!strcmp(yytext,"typedef")){
-		//return RSV_TYPEDEF;
-	}
-	else if(!strcmp(yytext,"int")){
-		//return RSV_INT;
-	}
-	else if(!strcmp(yytext,"float")){
-		//return RSV_FLOAT:
-	}
-        else if(!strcmp(yytext,"void")){
-                //return RSV_VOID:
-        }
-        else if(!strcmp(yytext,"if")){
-                //return RSV_IF:
-        }
-        else if(!strcmp(yytext,"else")){
-                //return RSV_ELSE:
-        }
-        else if(!strcmp(yytext,"for")){
-                //return RSV_FOR:
-        }
-        else if(!strcmp(yytext,"while")){
-                //return RSV_WHILE:
-        }
-	else{
-		if(verbose)
-			printf("got an id %s\n",yytext);
-		symtab* entry = lookup(yytext);
-		if(!entry)
-			insertID(yytext);
-		else
-			entry->counter++;
-		//return IDENTIFIER;
-	}
-}
-"-"?{digit}+"f"?			{
-	if(yytext[yyleng-1]!='f'){
-		if(verbose)
-			printf("got an int constant %s\n",yytext);
-		//return CONST_INT;
-	}
-	else{
-		if(verbose)
-			printf("got a float constant %s\n",yytext);
-		//return CONST_FLOAT;
-	}
-}
-"-"?({digit}+"."{digit}*|"."{digit}+)"f"?       {
-        if(verbose)
-		printf("got a float constant %s\n",yytext);
-        //return CONST_FLOAT;
-}
-"\""[^"]+"\""				{
-	if(verbose)
-		printf("got a string constant %s\n",yytext);
-	//return CONST_STRING;
-}
-"/*"([^*]|(\*)+[^*/])*(\*)+"/"		{ 
-	// regex like "/*"(.|\n)*"*/" is incorrect 
-	// because if we have anything (e.g. functions) 
-	// in between two comments they will be treated
-	// as (.|\n)* and will be sent here all at once
-	
-	int linenumber_old = linenumber;
-	printf("%s\n",yytext);
-	while(*yytext){
-		linenumber+=(*yytext=='\n')?1:0;
-		yytext++;
-	}
-	if(verbose){
-		if(linenumber_old!=linenumber){
-			printf("multi-line comment detected from line %d to %d\n",linenumber_old,linenumber);
-		}
-		else
-			printf("single-line comment detected on line %d\n",linenumber);
-	}
-}
-\n					linenumber++;
-"{"					;//return LBRACE;
-"}"					;//return RBRACE;
-"("					;//return LPAREN;
-")"					;//return RPAREN;
-"["					;//return LBRACKET;
-"]"					;//return RBRACKET;
-";"					;//return SEMICOL;
-","					;//return COMA;
-"."					;//return DOT;
-"->"					;//return ARROW;
-"="					;//return OP_ASSIGN;
-"+"					;//return OP_ADD;
-"-"					;//return OP_SUB;
-"*"					;//return OP_MUL;
-"/"					;//return OP_DIV;
-"<"					;//return OP_SMALLER;
-">"					;//return OP_LARGER;
-"<="					;//return OP_SMALLEREQ;
-">="					;//return OP_LARGEREQ;
-"!="					;//return OP_NOTEQ;
-"=="					;//return OP_EQ;
-"||"					;//return OP_OR;
-"&&"					;//return OP_AND;
-"!"					;//return OP_NOT;
-"|"					;//return OP_BITWISE_OR;
-"&"					;//return OP_BITWISE_AND;
-"~"					;//return OP_BITWISE_NOT;
-{sep}					;
-.					{
-	printf("Unexpected token %s at line %d\n",yytext,linenumber);
-	return ERROR;
-}
+letter          [A-Za-z]
+digit           [0-9]
+kwInt           "int"
+kwFloat         "float"
+kwVoid          "void"
+kwIf            "if"
+kwElse          "else"
+kwWhile         "while"
+kwFor	        "for"
+kwTypedef       "typedef"
+kwReturn        "return"
+ID              ({letter})({letter}|{digit}|"_")*
+op_assign       "="
+op_or           "||"
+op_and          "&&"
+op_not          "!"
+op_eq           "=="
+op_ne           "!="
+op_lt           "<"
+op_gt           ">"
+op_le           "<="
+op_ge           ">="
+op_plus         "+"
+op_minus        "-"
+op_times        "*"
+op_divide       "/"
+int_constant    {digit}+
+flt_constant    (({digit}*\.{digit}+|{digit}+\.)([eE][+-]?{digit}+)?)|({digit}+[eE][+-]?{digit}+)
+s-const         \"([^"\n])*\"
+comment	        "/*"(([^*])|([*]+[^/*]))*("*")+"/"
+ws              [ \t]+
+newline         "\n"
+mk_lparen       "("
+mk_rparen       ")"
+mk_lbrace       "{"
+mk_rbrace       "}"
+mk_lsqbrace     "["
+mk_rsqbrace     "]"
+mk_comma        ","
+mk_semicolon    ";"
+mk_dot          "."
+error            .
 
 %%
-int main()
-{
-	yylex();
-	printSymTab();
-	freeSymTab();
-	if(verbose)
-		printf("total lines = %d\n",linenumber);
-}
+
+{ws}            ;   /* do nothing with whitespace */
+{comment}	    {
+                    int i=0;
+                    while (yytext[i]!='\0') {
+                        if (yytext[i]=='\n')
+                            linenumber++;
+                        i++;
+                    }
+                }	
+{kwInt}         return INT;
+{kwFloat}       return FLOAT;
+{kwVoid}		return VOID;
+{kwIf}          return IF;
+{kwElse}        return ELSE;
+{kwWhile}       return WHILE;
+{kwFor}      	return FOR;
+{kwTypedef}     return TYPEDEF;
+{kwReturn}      return RETURN;
+{ID}			{
+                    yylval.lexeme = strdup(yytext);
+                    if (!yylval.lexeme) {
+                        printf("out of memory\n");
+                        exit(0);
+                    }
+                    //printf("%s\n",yylval);
+                    return ID;
+                }
+{op_assign}     return OP_ASSIGN;
+{op_and}        return OP_AND;
+{op_or}         return OP_OR;
+{op_not}        return OP_NOT;
+{op_eq}         return OP_EQ;
+{op_ne}         return OP_NE;
+{op_lt}         return OP_LT;
+{op_gt}         return OP_GT;
+{op_le}         return OP_LE;
+{op_ge}         return OP_GE;
+{op_plus}       return OP_PLUS;
+{op_minus}      return OP_MINUS;
+{op_times}      return OP_TIMES;
+{op_divide}     return OP_DIVIDE;
+{int_constant}  {
+                    CON_Type *p;
+                    p = (CON_Type *)malloc(sizeof(CON_Type));
+                    p->const_type = INTEGERC;
+                    p->const_u.intval = atoi(yytext);
+                    yylval.const1 = p;
+                    return CONST;
+                }
+{flt_constant}  {
+                    CON_Type *p;
+                    p = (CON_Type *)malloc(sizeof(CON_Type));
+                    p->const_type = FLOATC;
+                    p->const_u.fval = atof(yytext);
+                    yylval.const1 = p;
+                    return CONST;
+                }
+{s-const}       {
+                    CON_Type *p;
+                    p = (CON_Type *)malloc(sizeof(CON_Type));
+                    p->const_type = STRINGC;
+                    p->const_u.sc = strdup(yytext);
+                    yylval.const1 = p;
+                    return CONST;
+                }
+{mk_lparen}     return MK_LPAREN;
+{mk_rparen}     return MK_RPAREN;
+{mk_lbrace}     return MK_LBRACE;
+{mk_rbrace}     return MK_RBRACE;
+{mk_lsqbrace}   return MK_LB;
+{mk_rsqbrace}   return MK_RB;
+{mk_comma}      return MK_COMMA;
+{mk_semicolon}  return MK_SEMICOLON;
+{mk_dot}		return MK_DOT;
+{newline}       linenumber += 1;
+{error}         return ERROR;
+
+%%
